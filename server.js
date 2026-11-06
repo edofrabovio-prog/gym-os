@@ -154,7 +154,7 @@ const server = http.createServer(async (req, res) => {
 
     const file = path.resolve("public/index.html");
     res.writeHead(200, { "Content-Type": "text/html; charset=utf-8" });
-    res.end(fs.readFileSync(file));
+    return res.end(fs.readFileSync(file));
 
 } catch (e) {
   console.error("Errore server:", e);
