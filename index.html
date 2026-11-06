@@ -1,0 +1,619 @@
+
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#101714">
+<title>GYM OS 1.2</title>
+<style>
+:root {
+  --bg:#101714;
+  --card:#1b2620;
+  --line:#344238;
+  --green:#b4f36a;
+  --text:#f2f6f0;
+  --muted:#a4b2a7;
+}
+* { box-sizing:border-box; }
+body {
+  margin:0;
+  background:var(--bg);
+  color:var(--text);
+  font-family:system-ui,-apple-system,sans-serif;
+}
+header {
+  padding:22px 18px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+h1 { margin:0;font-size:24px; }
+h2 { font-size:19px;margin:22px 0 12px; }
+small,.muted { color:var(--muted); }
+.logo { color:var(--green); }
+main { max-width:900px;margin:auto;padding:0 16px 100px; }
+nav {
+  display:flex;
+  gap:8px;
+  overflow-x:auto;
+  padding:0 16px 16px;
+}
+button {
+  border:0;
+  border-radius:12px;
+  padding:12px 16px;
+  background:var(--green);
+  color:#142010;
+  font-weight:700;
+  cursor:pointer;
+}
+nav button {
+  background:var(--card);
+  color:var(--text);
+  white-space:nowrap;
+}
+nav button.active {
+  background:var(--green);
+  color:#142010;
+}
+.card {
+  background:var(--card);
+  border:1px solid var(--line);
+  border-radius:18px;
+  padding:18px;
+  margin:12px 0;
+}
+.grid {
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:12px;
+}
+.grid .card { margin:0; }
+.value {
+  font-size:28px;
+  font-weight:800;
+  color:var(--green);
+  margin-top:8px;
+}
+.view { display:none; }
+.view.active { display:block; }
+select {
+  width:100%;
+  background:var(--bg);
+  color:var(--text);
+  padding:12px;
+  border:1px solid var(--line);
+  border-radius:10px;
+}
+.item {
+  border-bottom:1px solid var(--line);
+  padding:13px 0;
+}
+.item:last-child { border:0; }
+.item strong { display:block;margin-bottom:5px; }
+svg { width:100%;height:190px; }
+table {
+  width:100%;
+  border-collapse:collapse;
+  font-size:13px;
+}
+th,td {
+  text-align:left;
+  padding:10px 6px;
+  border-bottom:1px solid var(--line);
+}
+.scroll { overflow-x:auto; }
+.status { font-size:12px;color:var(--muted); }
+.notice { color:var(--green); }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>GYM <span class="logo">OS</span></h1>
+    <small>PERSONAL FITNESS INTELLIGENCE · 1.2</small>
+  </div>
+  <span id="status" class="status">Caricamento…</span>
+</header>
+
+<nav>
+  <button class="active" data-tab="home">Home</button>
+  <button data-tab="workouts">Allenamenti</button>
+  <button data-tab="stats">Statistiche</button>
+  <button data-tab="compare">Confronti</button>
+  <button data-tab="coach">Coach</button>
+  <button data-tab="programs">Schede</button>
+</nav>
+
+<main>
+<section id="home" class="view active">
+  <h2>La tua panoramica</h2>
+  <div class="grid">
+    <div class="card"><small>Allenamenti</small><div id="total" class="value">0</div></div>
+    <div class="card"><small>Volume totale</small><div id="volume" class="value">0</div></div>
+    <div class="card"><small>Esercizi</small><div id="exerciseCount" class="value">0</div></div>
+    <div class="card"><small>Serie registrate</small><div id="setCount" class="value">0</div></div>
+  </div>
+  <h2>Sincronizzazione Lyfta</h2>
+  <div class="card">
+    <p id="lastSync" class="muted">Nessuna sincronizzazione.</p>
+    <button id="syncButton">↻ Sincronizza ora</button>
+    <p id="message" class="muted"></p>
+  </div>
+  <h2>Volume degli ultimi allenamenti</h2>
+  <div class="card"><svg id="chart" viewBox="0 0 600 190"></svg></div>
+</section>
+
+<section id="workouts" class="view">
+  <h2>Storico allenamenti</h2>
+  <div id="workoutList" class="card"></div>
+</section>
+
+<section id="stats" class="view">
+  <h2>Progressione esercizio</h2>
+  <div class="card">
+    <select id="exerciseSelect"></select>
+    <div id="exerciseStats"></div>
+    <svg id="exerciseChart" viewBox="0 0 600 190"></svg>
+  </div>
+</section>
+
+<section id="compare" class="view">
+  <h2>Confronto per gruppo muscolare</h2>
+  <div class="card">
+    <select id="muscleSelect"></select>
+    <div id="comparison" class="scroll"></div>
+    <p class="muted">Carichi e 1RM di esercizi diversi non sono direttamente confrontabili.</p>
+  </div>
+</section>
+
+<section id="coach" class="view">
+  <h2>GYM OS Coach</h2>
+  <div class="card">
+    <div id="quality"></div>
+  </div>
+  <div id="insights"></div>
+  <p class="muted">Il Coach 1.2 utilizza regole statistiche, non un modello AI generativo. I suggerimenti non sostituiscono un professionista.</p>
+</section>
+
+<section id="programs" class="view">
+  <h2>Programmi Lyfta</h2>
+  <div id="programList" class="card"></div>
+  <h2>Template Lyfta</h2>
+  <div id="templateList" class="card"></div>
+</section>
+</main>
+
+<script>
+const $ = id => document.getElementById(id);
+
+let db = {
+  workouts: [],
+  collections: [],
+  templates: []
+};
+
+const groups = {
+  Petto: /bench|chest|pec|fly|croci|petto/i,
+  Schiena: /row|pulldown|lat|pull.up|schiena|rematore/i,
+  Spalle: /shoulder|lateral|military|deltoid|alzate/i,
+  Bicipiti: /bicep|curl/i,
+  Tricipiti: /tricep|pushdown|french/i,
+  Gambe: /squat|leg press|leg curl|leg extension|quad|hamstring|affondi/i,
+  Glutei: /glute|hip thrust|kickback/i,
+  Polpacci: /calf|polpacci/i,
+  Addome: /crunch|plank|abdominal|abs/i
+};
+
+function escapeHtml(value) {
+  return String(value ?? "").replace(/[&<>"']/g, c => ({
+    "&":"&amp;",
+    "<":"&lt;",
+    ">":"&gt;",
+    '"':"&quot;",
+    "'":"&#39;"
+  })[c]);
+}
+
+function num(v) {
+  const x = Number(String(v ?? 0).replace(",", "."));
+  return Number.isFinite(x) ? x : 0;
+}
+
+function exercises(w) {
+  return Array.isArray(w.exercises) ? w.exercises : [];
+}
+
+function sets(e) {
+  return Array.isArray(e.sets) ? e.sets : [];
+}
+
+function nameOf(e) {
+  return e.excercise_name || e.exercise_name || e.name || "Esercizio";
+}
+
+function dateOf(w) {
+  return w.workout_perform_date || w.timeline_time || w.created_at || "";
+}
+
+function fmtDate(value) {
+  if (!value) return "Data non disponibile";
+  const d = new Date(value);
+  return Number.isNaN(d.getTime())
+    ? String(value)
+    : d.toLocaleDateString("it-IT");
+}
+
+function validSets(e) {
+  return sets(e).filter(s => s.is_completed !== false);
+}
+
+function volumeOf(w) {
+  return exercises(w).reduce((a,e) =>
+    a + validSets(e).reduce((b,s) =>
+      b + num(s.weight) * num(s.reps), 0
+    ), 0
+  );
+}
+
+function groupOf(name) {
+  return Object.keys(groups).find(g => groups[g].test(name)) || "Altro";
+}
+
+function allRows() {
+  const result = [];
+
+  for (const w of db.workouts) {
+    for (const e of exercises(w)) {
+      const valid = validSets(e);
+      if (!valid.length) continue;
+
+      const measured = valid.filter(s =>
+        num(s.weight) > 0 && num(s.reps) > 0
+      );
+
+      const best = measured.reduce((max,s) =>
+        Math.max(max, num(s.weight) * (1 + num(s.reps) / 30)), 0
+      );
+
+      result.push({
+        name: nameOf(e),
+        group: groupOf(nameOf(e)),
+        date: dateOf(w),
+        sets: valid.length,
+        measured: measured.length,
+        volume: measured.reduce((a,s) =>
+          a + num(s.weight) * num(s.reps), 0
+        ),
+        maxWeight: Math.max(0,...measured.map(s => num(s.weight))),
+        e1rm: best,
+        maxReps: Math.max(0,...measured.map(s => num(s.reps)))
+      });
+    }
+  }
+
+  return result.sort((a,b) => String(a.date).localeCompare(String(b.date)));
+}
+
+function lineChart(id, values) {
+  const svg = $(id);
+  svg.innerHTML = "";
+
+  if (!values.length) {
+    svg.innerHTML = '<text x="20" y="90" fill="#a4b2a7">Nessun dato</text>';
+    return;
+  }
+
+  const max = Math.max(...values,1);
+  const min = Math.min(...values,0);
+  const range = max-min || 1;
+
+  const pts = values.map((v,i) => ({
+    x: 20 + 560 * (values.length === 1 ? .5 : i/(values.length-1)),
+    y: 165 - 135 * (v-min)/range
+  }));
+
+  const d = pts.map((p,i) =>
+    `${i ? "L" : "M"}${p.x},${p.y}`
+  ).join(" ");
+
+  svg.innerHTML = `
+    <line x1="20" y1="165" x2="580" y2="165" stroke="#344238"/>
+    <path d="${d}" fill="none" stroke="#b4f36a"
+      stroke-width="3" stroke-linecap="round"/>
+    ${pts.map(p => `<circle cx="${p.x}" cy="${p.y}" r="4"
+      fill="#b4f36a"/>`).join("")}
+  `;
+}
+
+function renderHome() {
+  const rows = allRows();
+
+  $("total").textContent = db.workouts.length;
+  $("volume").textContent =
+    Math.round(db.workouts.reduce((a,w) => a+volumeOf(w),0))
+      .toLocaleString("it-IT") + " kg";
+  $("exerciseCount").textContent = new Set(rows.map(r=>r.name)).size;
+  $("setCount").textContent = rows.reduce((a,r)=>a+r.sets,0);
+
+  $("lastSync").textContent = db.lastSync
+    ? "Ultima sincronizzazione: " + new Date(db.lastSync).toLocaleString("it-IT")
+    : "Nessuna sincronizzazione completata.";
+
+  const recent = [...db.workouts]
+    .sort((a,b)=>String(dateOf(a)).localeCompare(String(dateOf(b))))
+    .slice(-10);
+
+  lineChart("chart",recent.map(volumeOf));
+}
+
+function renderWorkouts() {
+  const sorted = [...db.workouts]
+    .sort((a,b)=>String(dateOf(b)).localeCompare(String(dateOf(a))));
+
+  $("workoutList").innerHTML = sorted.length
+    ? sorted.map(w => `
+      <div class="item">
+        <strong>${escapeHtml(w.title || w.name || "Allenamento")}</strong>
+        <small>${fmtDate(dateOf(w))} · ${exercises(w).length} esercizi ·
+          ${Math.round(volumeOf(w)).toLocaleString("it-IT")} kg volume</small>
+        <details>
+          <summary>Mostra esercizi</summary>
+          ${exercises(w).map(e => `
+            <p><small>${escapeHtml(nameOf(e))} ·
+            ${validSets(e).length} serie</small></p>
+          `).join("")}
+        </details>
+      </div>
+    `).join("")
+    : "Nessun allenamento importato.";
+}
+
+function renderStats() {
+  const rows = allRows();
+  const names = [...new Set(rows.map(r=>r.name))].sort();
+  const select = $("exerciseSelect");
+  const previous = select.value;
+
+  select.innerHTML = names.map(n =>
+    `<option value="${escapeHtml(n)}">${escapeHtml(n)}</option>`
+  ).join("");
+
+  if (names.includes(previous)) select.value = previous;
+
+  const selected = rows.filter(r=>r.name===select.value);
+  const latest = selected.at(-1);
+
+  if (!latest) {
+    $("exerciseStats").innerHTML = "<p>Nessun dato.</p>";
+    lineChart("exerciseChart",[]);
+    return;
+  }
+
+  $("exerciseStats").innerHTML = `
+    <div class="grid">
+      <div class="card"><small>Carico max recente</small>
+        <div class="value">${latest.maxWeight} kg</div></div>
+      <div class="card"><small>1RM stimato recente</small>
+        <div class="value">${latest.e1rm.toFixed(1)} kg</div></div>
+      <div class="card"><small>Sessioni</small>
+        <div class="value">${selected.length}</div></div>
+      <div class="card"><small>Volume totale</small>
+        <div class="value">${Math.round(
+          selected.reduce((a,r)=>a+r.volume,0)
+        )} kg</div></div>
+    </div>
+    <p class="muted">1RM stimato con formula di Epley.</p>
+  `;
+
+  lineChart("exerciseChart",selected.slice(-12).map(r=>r.maxWeight));
+}
+
+function renderCompare() {
+  const rows = allRows();
+  const select = $("muscleSelect");
+  const previous = select.value;
+
+  const available = [...new Set(rows.map(r=>r.group))].sort();
+
+  select.innerHTML = available.map(g =>
+    `<option value="${escapeHtml(g)}">${escapeHtml(g)}</option>`
+  ).join("");
+
+  if (available.includes(previous)) select.value = previous;
+
+  const grouped = {};
+
+  rows.filter(r=>r.group===select.value).forEach(r => {
+    const x = grouped[r.name] ||= {
+      name:r.name, sessions:0, sets:0, volume:0, e1rm:0
+    };
+
+    x.sessions++;
+    x.sets += r.sets;
+    x.volume += r.volume;
+    x.e1rm = Math.max(x.e1rm,r.e1rm);
+  });
+
+  const items = Object.values(grouped).sort((a,b)=>b.sets-a.sets);
+
+  $("comparison").innerHTML = items.length ? `
+    <table>
+      <thead><tr>
+        <th>Esercizio</th><th>Sessioni</th><th>Serie</th>
+        <th>Volume</th><th>1RM max</th>
+      </tr></thead>
+      <tbody>${items.map(x=>`
+        <tr>
+          <td>${escapeHtml(x.name)}</td>
+          <td>${x.sessions}</td>
+          <td>${x.sets}</td>
+          <td>${Math.round(x.volume)} kg</td>
+          <td>${x.e1rm.toFixed(1)} kg</td>
+        </tr>
+      `).join("")}</tbody>
+    </table>
+  ` : "<p>Nessun dato.</p>";
+}
+
+function renderCoach() {
+  const rows = allRows();
+  const totalSets = rows.reduce((a,r)=>a+r.sets,0);
+  const valid = rows.reduce((a,r)=>a+r.measured,0);
+  const completeness = totalSets ? valid/totalSets : 0;
+  const history = Math.min(1,db.workouts.length/8);
+  const score = Math.round(100*(completeness*.7+history*.3));
+
+  $("quality").innerHTML = `
+    <strong>Qualità dello storico</strong>
+    <div class="value">${score}/100</div>
+    <small>${valid}/${totalSets} serie con peso e ripetizioni.
+    Il punteggio indica disponibilità dei dati, non qualità tecnica.</small>
+  `;
+
+  const byExercise = {};
+  rows.forEach(r=>(byExercise[r.name] ||= []).push(r));
+
+  const insights = [];
+
+  for (const [name,history] of Object.entries(byExercise)) {
+    if (history.length < 4) continue;
+
+    const recent = history.slice(-2);
+    const previous = history.slice(-4,-2);
+
+    const avg = arr =>
+      arr.reduce((a,r)=>a+r.e1rm,0)/arr.length;
+
+    if (avg(previous)>0 && avg(recent)<=avg(previous)*1.01) {
+      insights.push({
+        title:"Possibile stallo",
+        text:`${name}: il valore medio di 1RM stimato nelle ultime
+        due sessioni non supera chiaramente quello delle due precedenti.
+        Controlla tecnica, recupero e RIR prima di modificare il programma.`
+      });
+    }
+
+    const last = history.at(-1);
+
+    if (recent.every(r=>r.maxReps>=10) &&
+        recent.every(r=>r.maxWeight>=last.maxWeight) &&
+        last.maxWeight>0) {
+      insights.push({
+        title:"Possibile aumento carico",
+        text:`${name}: le ultime sessioni mostrano almeno 10 ripetizioni.
+        Se il carico, la tecnica e il RIR sono coerenti, valuta
+        un piccolo incremento.`
+      });
+    }
+  }
+
+  if (!insights.length) {
+    insights.push({
+      title:"Continua a costruire lo storico",
+      text:"Non ci sono ancora segnali sufficientemente chiari per suggerire modifiche ai carichi."
+    });
+  }
+
+  $("insights").innerHTML = insights.slice(0,12).map(i=>`
+    <div class="card">
+      <strong class="notice">${escapeHtml(i.title)}</strong>
+      <p>${escapeHtml(i.text)}</p>
+    </div>
+  `).join("");
+}
+
+function renderPrograms() {
+  $("programList").innerHTML = db.collections.length
+    ? db.collections.map(p=>`
+      <div class="item"><strong>${escapeHtml(p.title||p.name||"Programma")}</strong></div>
+    `).join("")
+    : "Nessun programma disponibile.";
+
+  $("templateList").innerHTML = db.templates.length
+    ? db.templates.map(t=>`
+      <div class="item"><strong>${escapeHtml(t.title||t.name||"Template")}</strong></div>
+    `).join("")
+    : "Nessun template disponibile.";
+}
+
+function render() {
+  renderHome();
+  renderWorkouts();
+  renderStats();
+  renderCompare();
+  renderCoach();
+  renderPrograms();
+}
+
+async function load() {
+  try {
+    const [dataResponse,statusResponse] = await Promise.all([
+      fetch("/api/data"),
+      fetch("/api/status")
+    ]);
+
+    if (!dataResponse.ok || !statusResponse.ok) {
+      throw new Error("Errore server");
+    }
+
+    db = await dataResponse.json();
+    const status = await statusResponse.json();
+
+    $("status").textContent = status.connected
+      ? "● Lyfta configurata"
+      : "○ Lyfta non configurata";
+
+    render();
+  } catch (e) {
+    $("status").textContent = "Server non disponibile";
+    $("message").textContent = e.message;
+  }
+}
+
+async function sync() {
+  const btn = $("syncButton");
+  btn.disabled = true;
+  btn.textContent = "Sincronizzazione…";
+  $("message").textContent = "";
+
+  try {
+    const response = await fetch("/api/sync",{method:"POST"});
+    const result = await response.json();
+
+    if (!response.ok) throw new Error(result.error || "Errore importazione");
+
+    $("message").textContent =
+      `Sincronizzazione completata. ${result.total} allenamenti salvati.`;
+
+    await load();
+  } catch (e) {
+    $("message").textContent = e.message;
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "↻ Sincronizza ora";
+  }
+}
+
+document.querySelectorAll("[data-tab]").forEach(btn => {
+  btn.addEventListener("click", () => {
+    document.querySelectorAll("[data-tab]").forEach(x =>
+      x.classList.toggle("active",x===btn)
+    );
+
+    document.querySelectorAll(".view").forEach(x =>
+      x.classList.toggle("active",x.id===btn.dataset.tab)
+    );
+  });
+});
+
+$("syncButton").addEventListener("click",sync);
+$("exerciseSelect").addEventListener("change",renderStats);
+$("muscleSelect").addEventListener("change",renderCompare);
+
+load();
+</script>
+</body>
+</html>
