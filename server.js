@@ -62,27 +62,49 @@ function extractArray(payload, keys) {
   return [];
 }
 
+
 async function getPages(endpoint, keys) {
   const all = [];
+  let page = 1;
+  let totalPages = 1;
 
-  for (let page = 1; page <= 30; page++) {
+  do {
     const separator = endpoint.includes("?") ? "&" : "?";
+
     const payload = await lyfta(
       `${endpoint}${separator}page=${page}&limit=100`
     );
 
+    if (payload.status === false) {
+      throw new Error("Lyfta ha rifiutato la richiesta");
+    }
+
     const items = extractArray(payload, keys);
     all.push(...items);
 
-    const totalPages =
-      payload?.total_pages ??
-      payload?.pagination?.total_pages ??
-      payload?.meta?.last_page;
+    totalPages = Number(
+      payload.total_pages ??
+      payload.pagination?.total_pages ??
+      payload.meta?.last_page ??
+      1
+    );
 
-    if (totalPages && page >= Number(totalPages)) break;
-    if (!totalPages && items.length < 100) break;
-    if (!items.length) break;
-  }
+    console.log(
+      `[Lyfta] ${endpoint} - pagina ${page}/${totalPages}`,
+      `- ricevuti ${items.length}`,
+      `- totale API ${payload.total_records ?? "non indicato"}`
+    );
+
+    if (page >= 100) {
+      throw new Error("Limite di sicurezza: oltre 100 pagine");
+    }
+
+    page++;
+  } while (page <= totalPages);
+
+  return all;
+}
+
 
   return all;
 }
