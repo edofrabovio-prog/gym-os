@@ -155,9 +155,18 @@ const server = http.createServer(async (req, res) => {
     const file = path.resolve("public/index.html");
     res.writeHead(200, { "Content-Type": "text/html; charset=utf-8" });
     res.end(fs.readFileSync(file));
-  } catch (e) {
-    json(res, { error: e.message }, 500);
+
+} catch (e) {
+  console.error("Errore server:", e);
+
+  if (res.headersSent) {
+    if (!res.writableEnded) res.end();
+    return;
   }
+
+  json(res, { error: e.message }, 500);
+}
+
 });
 
 server.listen(PORT, () => {
